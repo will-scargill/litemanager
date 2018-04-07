@@ -3,6 +3,12 @@ from tkinter.filedialog import *
 from tkinter import *
 import sqlite3
 
+sqlvartypes_to_pythonvartypes = {
+    "TEXT" : str,
+    "INTEGER" : int,
+    "REAL" : float
+    }
+
 if __name__ == "__main__":
     print("LiteManager")
     print("Type 'help' for a list of commands")
@@ -71,8 +77,15 @@ if __name__ == "__main__":
                 values = []
                 i=0
                 for item in data:
-                    columns.append(data[i][1])
-                    column_input = input("        >>> ")
+                    columns.append(data[i])                    
+                    print("        "+str(columns[i][1] + " - " + columns[i][2]))
+                    check = False
+                    while check == False:
+                        column_input = input("        >>> ")
+                        try:
+                            column_input = sqlvartypes_to_pythonvartypes[columns[i][2]](column_input)
+                        except:
+                            print("        Error - Wrong data type")
                     values.append(column_input)
                     i += 1
                 c.execute("INSERT INTO " + tablename + " ('" + "', '".join(columns) + "') values ({})".format("'" + ("', '".join(values)) + "'"))
@@ -108,7 +121,63 @@ if __name__ == "__main__":
                 print("Operational Error")
                 print(e)
         elif command == "create":
-            pass
+            try:
+                print("    Input Table Name")
+                tablename = input("    >>> ")
+                if tablename == "":
+                    print("    Please enter a table name")
+                else:
+                    columns = []
+                    check = False
+                    print("""    ===Possible Data Types===
+        INTEGER - Whole Number
+        TEXT - String
+        REAL - Floating Point
+        =========================""")
+                    while check == False:
+                        col = []
+                        print("    Input Column Name/q to finish")
+                        col_name = input("    >>> ")
+                        if col_name == "":
+                            print("    Please enter a column name")
+                        else:
+                            if col_name == "q":
+                                if len(columns) == 0:
+                                    print("    Table must have at least 1 column")
+                                else:
+                                    col_names = []
+                                    col_types = []
+                                    for col in columns:
+                                        col_names.append(col[0])
+                                        col_types.append(col[1])
+                                    formatted_text = ""
+                                    for i in range(len(columns)):
+                                        formatted_text += col_names[i]
+                                        formatted_text += " "
+                                        formatted_text += col_types[i]
+                                        formatted_text += ", "
+                                    formatted_text = formatted_text[:(len(formatted_text)-2)]
+                                    c.execute("CREATE TABLE " + tablename + " (" + formatted_text + ")")
+                                    conn.commit()
+                                    check = True
+                                    print("    Table created")
+                            else:
+                                print("    Input a column data type")
+                                col_type = input("    >>> ")
+                                if col_type == "":
+                                    print("    Please enter a column data type")
+                                else:
+                                    if col_type == "INTEGER" or col_type == "TEXT" or col_type == "REAL":
+                                        col.append(col_name)
+                                        col.append(col_type)
+                                        columns.append(col)
+                                    else:
+                                        print("    Invalid data type")
+                        
+                    
+            except sqlite3.OperationalError as e:
+                print("Operational Error")
+                print(e)  
         elif command == "drop":
             try:
                 c.execute("SELECT * FROM sqlite_master WHERE type='table'")
@@ -132,7 +201,7 @@ if __name__ == "__main__":
                 print("Operational Error")
                 print(e)           
         elif command == "wipe":
-            choice = input("Warning. This will permanently remove all entries from the database. Continue? y/n >>> ")
+            choice = input("Warning! This will permanently remove all entries from the database. Continue? y/n >>> ")
             if choice == "y":
                 print("Proceeding")
                 c.execute("SELECT * FROM sqlite_master WHERE type='table'")
@@ -163,45 +232,46 @@ wipe - wipes the database of all entries
 help - view all commands""")
 else:
     def connect(dbpath):
-        try:
             global conn
             conn = sqlite3.connect(dbpath)
             global c
             c = conn.cursor()
-        except sqlite3.OperationalError as e:
-            print("Operational Error")
-            print(e) 
+    def raw(raw):
+        c.execute(raw)
+        data = c.fetchall()
+        if data == []:
+            pass
+        else:
+            return(data)
+        conn.commit()
     def input(tablename, input_data):
-        try:
-            if type(input_data) != list:
-                print("Incorrect arg type")
-            else:
-                c.execute("PRAGMA table_info({})".format(tablename))
-                data = c.fetchall()
-                columns = []
-                i=0
-                for item in data:
-                    columns.append(data[i][1])
-                    i += 1
-                c.execute("INSERT INTO " + tablename + " ('" + "', '".join(columns) + "') values ({})".format("'" + ("', '".join(input_data)) + "'"))
-                conn.commit()
-        except sqlite3.OperationalError as e:
-            print("Operational Error")
-            print(e) 
-    def delete(tablename, column, spec):
-        try:
-            c.execute("DELETE FROM " + tablename + " WHERE " + column + "=?",[spec])
+            c.execute("PRAGMA table_info({})".format(tablename))
+            data = c.fetchall()
+            columns = []
+            i=0
+            for item in data:
+                columns.append(data[i][1])
+                i += 1
+            c.execute("INSERT INTO " + tablename + " ('" + "', '".join(columns) + "') values ({})".format("'" + ("', '".join(input_data)) + "'"))
             conn.commit()
-        except sqlite3.OperationalError as e:
-            print("Operational Error")
-            print(e)        
-    def create(placeholder):
-        pass
+    def delete(tablename, column, conditional):
+            c.execute("DELETE FROM " + tablename + " WHERE " + column + "=?",[conditional])
+            conn.commit()      
+    def create(tablename, columns):
+        col_names = []
+        col_types = []
+        for col in columns:
+            col_names.append(col[0])
+            col_types.append(col[1])
+        formatted_text = ""
+        for i in range(len(columns)):
+            formatted_text += col_names[i]
+            formatted_text += " "
+            formatted_text += col_types[i]
+            formatted_text += ", "
+        formatted_text = formatted_text[:(len(formatted_text)-2)]
+        c.execute("CREATE TABLE " + tablename + " (" + formatted_text + ")")
+        conn.commit()
     def drop(tablename):
-        try:
             c.execute("DROP TABLE {}".format(tablename))
-            conn.commit()    
-        except sqlite3.OperationalError as e:
-            print("Operational Error")
-            print(e) 
-
+            conn.commit()     
