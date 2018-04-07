@@ -13,7 +13,7 @@ litemanager.connect(databasepath)
 
 ## Methods
 
-### `connect(dbpath[String])` 
+### `connect(dbpath{String})` 
 
 Sets up the database connection. This must be run before any other functions are run
 
@@ -21,7 +21,7 @@ Sets up the database connection. This must be run before any other functions are
 litemanager.connect("database.db")
 ```
 
-### `input(tablename[String], input_data[List of strings])` 
+### `input(tablename{String}, input_data{List of strings})` 
 
 Inputs an entry to a table. The input_data list must contain an amount of items identical to the amount of columns in the table. To leave an entry blank enter "".
 
@@ -29,7 +29,7 @@ Inputs an entry to a table. The input_data list must contain an amount of items 
 litemanager.input("foobar", ["Foo", "Bar"])
 ```
 
-### `delete(tablename[String], column[String], conditional[String])` 
+### `delete(tablename{String}, column{String}, conditional{String})` 
 
 Deletes an entry from a table. 'conditional' refers to the term used to identify the entry to be deleted.
 
@@ -37,7 +37,20 @@ Deletes an entry from a table. 'conditional' refers to the term used to identify
 litemanager.delete("foobar", "column1", "Foo")
 ```
 
-### `drop(tablename[String])` 
+### `create(tablename{String},[[colname{String},coltype{String}],[colname{String},coltype{String}]])` 
+
+Creates a table. The following types can be used fo coltype:
+INTEGER - Whole Number
+TEXT - String
+REAL - Floating Point
+
+Deletes a table
+
+```python
+litemanager.create("foobar", [["foo", "TEXT"], ["bar", "INTEGER"]])
+```
+
+### `drop(tablename{String})` 
 
 Deletes a table
 
