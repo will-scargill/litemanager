@@ -6,90 +6,102 @@ import sqlite3
 sqlvartypes_to_pythonvartypes = {
     "TEXT" : str,
     "INTEGER" : int,
-    "REAL" : float
+    "REAL" : float,
+    "BOOL" : bool
     }
 
 if __name__ == "__main__":
     print("LiteManager")
     print("Type 'help' for a list of commands")
 
-    root = Tk()
-    root.withdraw()
+    root = Tk() # Initialise Tkinter frame
+    root.withdraw() # Hide frame
 
-    dbpath = askopenfilename()
+    dbpath = askopenfilename() # Open database
 
-    conn = sqlite3.connect(dbpath)
-    c = conn.cursor()
+    conn = sqlite3.connect(dbpath) # Set up DB connection
+    c = conn.cursor() # Set up cursor
 
     while True:
         command = input(" >>> ")
-        if command == "raw":
+        if command == "raw": # Input raw SQL
             command = input("    >>> ")
             try:
-                c.execute("{}".format(command))
-                conn.commit()
-                data = c.fetchall()
-                if data == []:
-                    pass
-                else:
+                c.execute("{}".format(command)) # Execute command
+                conn.commit() # Commit command
+                data = c.fetchall() # Fetch recieved data (if any)
+                if data == []: # Is there any data?
+                    pass # If not, move on
+                else: # If there is
                     for item in data:
                         print("---------------")
                         for subitem in item:
-                            print(subitem)
+                            print(subitem) # Print data
                     print("---------------")
-            except sqlite3.OperationalError as e:
+            except sqlite3.OperationalError as e: # If SQL Syntax incorrect
                 print("Operational Error")
-                print(e)
-        elif command == "view":
+                print(e) # Print error
+        elif command == "view": # View all entries in a table
             try:
                 tablename = input("    >>> ")
-                c.execute("SELECT * FROM {}".format(tablename))
+                c.execute("SELECT * FROM {}".format(tablename)) # Select all entries from selected table
                 data = c.fetchall()
-                if data == []:
+                if data == []: # Is there any data?
                     print("No table data")
-                else:
+                else: # If there is
                     for item in data:
                             print("---------------")
                             for subitem in item:
-                                print(subitem)
+                                print(subitem) # Print data
                     print("---------------")
-            except sqlite3.OperationalError as e:
+            except sqlite3.OperationalError as e: # If SQL Syntax incorrect
                 print("Operational Error")
-                print(e)
-        elif command == "tables":
-            c.execute("SELECT * FROM sqlite_master WHERE type='table'")
+                print(e) # Print error
+        elif command == "tables": # View all tables
+            c.execute("SELECT * FROM sqlite_master WHERE type='table'") # Select all tables
             data = c.fetchall()
-            for item in data:
-                c.execute("PRAGMA table_info({})".format(item[1]))
-                data = c.fetchall()
-                print("\n---------------")
-                print("Name: " + item[1])
-                print("====Columns====")
-                for column in data:
-                    print("Column name: " + column[1] + " | Data Type: " + column[2])
-                print("---------------")
-        elif command == "input":
+            if data == []: # Is there any data?
+                print("No tables")
+            else: # If there is
+                for item in data:
+                    c.execute("PRAGMA table_info({})".format(item[1]))
+                    data = c.fetchall()
+                    print("\n---------------")
+                    print("Name: " + item[1])
+                    print("====Columns====")
+                    for column in data:
+                        print("Column name: " + column[1] + " | Data Type: " + column[2])
+                    print("---------------")
+        elif command == "input": # Add an entry to a table
             try:
                 tablename = input("    >>> ")
-                c.execute("PRAGMA table_info({})".format(tablename))
+                c.execute("PRAGMA table_info({})".format(tablename)) # Get all table information
                 data = c.fetchall()
                 columns = []
+                commandColumns = []
                 values = []
                 i=0
                 for item in data:
-                    columns.append(data[i])                    
-                    print("        "+str(columns[i][1] + " - " + columns[i][2]))
+                    columns.append(data[i]) # Add column data to columns                    
+                    print("        "+str(columns[i][1] + " - " + columns[i][2])) # Print column name and data type
                     check = False
-                    while check == False:
+                    while check == False: # While inputted data is incorrect type
                         column_input = input("        >>> ")
                         try:
-                            column_input = sqlvartypes_to_pythonvartypes[columns[i][2]](column_input)
-                        except:
+                            column_input = sqlvartypes_to_pythonvartypes[columns[i][2]](column_input) # Get equivalent data type
+                            check = True # Set check to true
+                        except: # Data type incorrect
                             print("        Error - Wrong data type")
-                    values.append(column_input)
+                    values.append(str(column_input)) # Add inputted value to values as a string (To stop .join freaking out)
+                    i += 1 # Add one to i
+                i=0 # Reset i
+                for col in columns:
+                    commandColumns.append(columns[i][1]) # Add column name to commandColumns
                     i += 1
-                c.execute("INSERT INTO " + tablename + " ('" + "', '".join(columns) + "') values ({})".format("'" + ("', '".join(values)) + "'"))
-                conn.commit()
+                c.execute("INSERT INTO " + tablename + " ('" + "', '".join(commandColumns) + "') values ({})".format("'" + ("', '".join(values)) + "'"))
+                # "', '".join(commandColumns) --- Joins the columns names
+                # ("', '".join(values)) --- Joins the values
+                conn.commit() # Commit entry
                 print("Input successful")
             except sqlite3.OperationalError as e:
                 print("Operational Error")
@@ -129,11 +141,12 @@ if __name__ == "__main__":
                 else:
                     columns = []
                     check = False
-                    print("""    ===Possible Data Types===
-        INTEGER - Whole Number
-        TEXT - String
-        REAL - Floating Point
-        =========================""")
+                    print("""===Possible Data Types===
+INTEGER - Whole Number
+TEXT - String
+REAL - Floating Point
+BOOL - Boolean
+=========================""")
                     while check == False:
                         col = []
                         print("    Input Column Name/q to finish")
