@@ -2,6 +2,7 @@ import os, sys
 from tkinter.filedialog import *
 from tkinter import *
 import sqlite3
+import time
 
 sqlvartypes_to_pythonvartypes = {
     "TEXT" : str,
@@ -18,6 +19,8 @@ if __name__ == "__main__":
     root.withdraw() # Hide frame
 
     dbpath = askopenfilename() # Open database
+
+    time.sleep(1)
 
     conn = sqlite3.connect(dbpath) # Set up DB connection
     c = conn.cursor() # Set up cursor
@@ -43,6 +46,7 @@ if __name__ == "__main__":
                 print(e) # Print error
         elif command == "view": # View all entries in a table
             try:
+                print("    Input Table Name")
                 tablename = input("    >>> ")
                 c.execute("SELECT * FROM {}".format(tablename)) # Select all entries from selected table
                 data = c.fetchall()
@@ -74,6 +78,7 @@ if __name__ == "__main__":
                     print("---------------")
         elif command == "input": # Add an entry to a table
             try:
+                print("    Input Table Name")
                 tablename = input("    >>> ")
                 c.execute("PRAGMA table_info({})".format(tablename)) # Get all table information
                 data = c.fetchall()
@@ -108,6 +113,7 @@ if __name__ == "__main__":
                 print(e)
         elif command == "delete":
             try:
+                print("    Input Table Name")
                 tablename = input("    >>> ")
                 c.execute("SELECT * FROM {}".format(tablename))
                 data = c.fetchall()
@@ -214,8 +220,8 @@ BOOL - Boolean
                 print("Operational Error")
                 print(e)           
         elif command == "wipe":
-            choice = input("Warning! This will permanently remove all entries from the database. Continue? y/n >>> ")
-            if choice == "y":
+            choice = input("Warning! This will permanently remove all entries from the database. Continue? Y/n >>> ")
+            if choice == "Y":
                 print("Proceeding")
                 c.execute("SELECT * FROM sqlite_master WHERE type='table'")
                 data = c.fetchall()
@@ -231,7 +237,7 @@ BOOL - Boolean
                 conn.commit()
                 print("Database wipe complete")
             elif choice == "n":
-                pass            
+                print("No data was deleted")
         elif command =="help":
             print("""----=help=----
 raw - input sql
